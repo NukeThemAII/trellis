@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 
-const nextConfig = {
+const nextConfig: NextConfig & { eslint: { ignoreDuringBuilds: boolean } } = {
   reactStrictMode: true,
   devIndicators: false,
   typescript: {
@@ -14,7 +14,7 @@ const nextConfig = {
     config.externals.push("pino-pretty", "lokijs", "encoding");
     return config;
   },
-} satisfies NextConfig & { eslint: { ignoreDuringBuilds: boolean } };
+};
 
 const isIpfs = process.env.NEXT_PUBLIC_IPFS_BUILD === "true";
 

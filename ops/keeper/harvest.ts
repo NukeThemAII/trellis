@@ -6,6 +6,20 @@ import { base, baseSepolia } from 'viem/chains';
 const vaultAbi = [
   {
     "inputs": [],
+    "name": "owner",
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "harvester",
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "harvest",
     "outputs": [],
     "stateMutability": "nonpayable",
@@ -50,6 +64,7 @@ const vaultAbi = [
 
 const HWM_SCALE = 10n ** 18n;
 const BPS_SCALE = 10_000n;
+const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
 function getChain() {
   const network = process.env.NETWORK ?? 'base';
@@ -60,6 +75,7 @@ async function main() {
   const rpcUrl = process.env.RPC_URL;
   const vaultAddress = process.env.VAULT_ADDRESS as `0x${string}` | undefined;
   const keeperKey = process.env.KEEPER_PK as `0x${string}` | undefined;
+  const harvesterEnv = process.env.HARVESTER_ADDRESS?.toLowerCase();
   const minFeeBps = BigInt(process.env.MIN_FEE_BPS ?? '5');
 
   if (!rpcUrl || !vaultAddress || !keeperKey) {
@@ -72,13 +88,38 @@ async function main() {
   const publicClient = createPublicClient({ chain, transport: http(rpcUrl) });
   const walletClient = createWalletClient({ chain, transport: http(rpcUrl), account });
 
-  const [totalAssets, totalSupply, decimals, highWaterMark, performanceFeeBps] = await Promise.all([
-    publicClient.readContract({ address: vaultAddress, abi: vaultAbi, functionName: 'totalAssets' }),
-    publicClient.readContract({ address: vaultAddress, abi: vaultAbi, functionName: 'totalSupply' }),
-    publicClient.readContract({ address: vaultAddress, abi: vaultAbi, functionName: 'decimals' }),
-    publicClient.readContract({ address: vaultAddress, abi: vaultAbi, functionName: 'highWaterMark' }),
-    publicClient.readContract({ address: vaultAddress, abi: vaultAbi, functionName: 'performanceFeeBps' })
-  ]);
+  const [owner, configuredHarvester, totalAssets, totalSupply, decimals, highWaterMark, performanceFeeBps] =
+    await Promise.all([
+      publicClient.readContract({ address: vaultAddress, abi: vaultAbi, functionName: 'owner' }),
+      publicClient.readContract({ address: vaultAddress, abi: vaultAbi, functionName: 'harvester' }),
+      publicClient.readContract({ address: vaultAddress, abi: vaultAbi, functionName: 'totalAssets' }),
+      publicClient.readContract({ address: vaultAddress, abi: vaultAbi, functionName: 'totalSupply' }),
+      publicClient.readContract({ address: vaultAddress, abi: vaultAbi, functionName: 'decimals' }),
+      publicClient.readContract({ address: vaultAddress, abi: vaultAbi, functionName: 'highWaterMark' }),
+      publicClient.readContract({ address: vaultAddress, abi: vaultAbi, functionName: 'performanceFeeBps' })
+    ]);
+
+  const signerAddress = account.address.toLowerCase();
+  const ownerAddress = owner.toLowerCase();
+  const harvesterAddress = configuredHarvester.toLowerCase();
+
+  if (harvesterAddress === ZERO_ADDRESS.toLowerCase() && signerAddress !== ownerAddress) {
+    throw new Error(
+      `Vault harvester not configured. Either set HARVESTER_ADDRESS and call setHarvester(), or run with the owner account (${owner}).`,
+    );
+  }
+
+  if (harvesterAddress !== ZERO_ADDRESS.toLowerCase() && signerAddress !== harvesterAddress) {
+    throw new Error(
+      `Configured harvester ${configuredHarvester} does not match signer ${account.address}. Update HARVESTER_ADDRESS or assign the signer via setHarvester().`,
+    );
+  }
+
+  if (harvesterEnv && harvesterEnv !== harvesterAddress) {
+    console.warn(
+      `HARVESTER_ADDRESS (${harvesterEnv}) does not match on-chain harvester (${harvesterAddress}). Using on-chain value.`,
+    );
+  }
 
   if (totalSupply === 0n) {
     console.log('nothing to harvest (supply = 0)');

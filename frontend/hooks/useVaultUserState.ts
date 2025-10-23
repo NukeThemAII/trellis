@@ -40,7 +40,7 @@ export const useVaultUserState = (params: {
           chainId,
         },
       ] as const)
-    : ([] as const);
+    : undefined;
 
   const { data, isLoading, refetch } = useReadContracts({
     allowFailure: false,
@@ -54,10 +54,11 @@ export const useVaultUserState = (params: {
   let walletBalance = 0n;
   let allowance = 0n;
 
-  if (data) {
-    userShares = data[0] as bigint;
-    walletBalance = data[1] as bigint;
-    allowance = data[2] as bigint;
+  if (data && data.length >= 3) {
+    const [sharesResult, balanceResult, allowanceResult] = data as unknown as [bigint, bigint, bigint];
+    userShares = sharesResult;
+    walletBalance = balanceResult;
+    allowance = allowanceResult;
   }
 
   const formattedBalance = useMemo(() => formatUnits(walletBalance, assetDecimals), [walletBalance, assetDecimals]);

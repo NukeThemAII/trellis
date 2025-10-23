@@ -14,48 +14,50 @@ type VaultMetricResult = {
 };
 
 export const useVaultMetrics = (params: { address?: HexAddress; chainId?: number; decimals?: number }) => {
-  const { address, chainId, decimals = 6 } = params;
+  const { address, chainId, decimals = 18 } = params;
 
   const enabled = Boolean(address);
+
+  const contracts = enabled
+    ? ([
+        {
+          address: address!,
+          chainId,
+          abi: trellisVaultAbi,
+          functionName: "totalAssets",
+        },
+        {
+          address: address!,
+          chainId,
+          abi: trellisVaultAbi,
+          functionName: "totalSupply",
+        },
+        {
+          address: address!,
+          chainId,
+          abi: trellisVaultAbi,
+          functionName: "performanceFeeBps",
+        },
+        {
+          address: address!,
+          chainId,
+          abi: trellisVaultAbi,
+          functionName: "highWaterMark",
+        },
+      ] as const)
+    : undefined;
 
   const { data, isLoading, isFetching, refetch } = useReadContracts({
     allowFailure: false,
     query: {
       enabled,
     },
-    contracts: enabled
-      ? [
-          {
-            address: address!,
-            chainId,
-            abi: trellisVaultAbi,
-            functionName: "totalAssets",
-          },
-          {
-            address: address!,
-            chainId,
-            abi: trellisVaultAbi,
-            functionName: "totalSupply",
-          },
-          {
-            address: address!,
-            chainId,
-            abi: trellisVaultAbi,
-            functionName: "performanceFeeBps",
-          },
-          {
-            address: address!,
-            chainId,
-            abi: trellisVaultAbi,
-            functionName: "highWaterMark",
-          },
-        ]
-      : [],
+    contracts,
   });
 
   const metrics: VaultMetricResult | undefined = useMemo(() => {
-    if (!data) return undefined;
-    const [totalAssets, totalSupply, performanceFeeBps, highWaterMark] = data as [
+    if (!data || data.length < 4) return undefined;
+    const [totalAssets, totalSupply, performanceFeeBps, highWaterMark] = data as unknown as [
       bigint,
       bigint,
       number,

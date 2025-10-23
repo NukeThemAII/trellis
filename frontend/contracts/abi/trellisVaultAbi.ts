@@ -275,6 +275,19 @@ export const trellisVaultAbi = [
   },
   {
     type: "function",
+    name: "harvester",
+    inputs: [],
+    outputs: [
+      {
+        name: "",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
     name: "highWaterMark",
     inputs: [],
     outputs: [
@@ -576,6 +589,19 @@ export const trellisVaultAbi = [
     inputs: [
       {
         name: "newRecipient",
+        type: "address",
+        internalType: "address",
+      },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "setHarvester",
+    inputs: [
+      {
+        name: "newHarvester",
         type: "address",
         internalType: "address",
       },
@@ -895,6 +921,25 @@ export const trellisVaultAbi = [
         type: "uint256",
         indexed: false,
         internalType: "uint256",
+      },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
+    name: "HarvesterUpdated",
+    inputs: [
+      {
+        name: "previousHarvester",
+        type: "address",
+        indexed: true,
+        internalType: "address",
+      },
+      {
+        name: "newHarvester",
+        type: "address",
+        indexed: true,
+        internalType: "address",
       },
     ],
     anonymous: false,
@@ -1354,6 +1399,11 @@ export const trellisVaultAbi = [
   {
     type: "error",
     name: "SweepAssetNotAllowed",
+    inputs: [],
+  },
+  {
+    type: "error",
+    name: "UnauthorizedHarvester",
     inputs: [],
   },
 ] as const;

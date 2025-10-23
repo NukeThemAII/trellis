@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.25;
 
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { IERC4626 } from "@openzeppelin/contracts/interfaces/IERC4626.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
-import { IStrategy } from "../interfaces/IStrategy.sol";
+import {IStrategy} from "../interfaces/IStrategy.sol";
 
 /// @title StrategyERC4626
 /// @notice Simple adapter that forwards capital to an underlying ERC-4626 strategy vault.
@@ -155,6 +155,14 @@ contract StrategyERC4626 is Ownable, IStrategy {
         }
 
         _targetVault = newTarget;
+
+        uint256 idle = assetToken.balanceOf(address(this));
+        if (idle > 0) {
+            address targetAddr = address(_targetVault);
+            assetToken.forceApprove(targetAddr, idle);
+            _targetVault.deposit(idle, address(this));
+            assetToken.forceApprove(targetAddr, 0);
+        }
 
         emit StrategyTargetUpdated(previous, address(newTarget));
     }

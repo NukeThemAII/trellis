@@ -1,15 +1,44 @@
 import { useMemo } from "react";
 import { formatUnits } from "viem";
+import { useReadContract } from "wagmi";
 import { VaultConfig, VaultNetworkConfig } from "~~/config/vaults";
 import { useVaultMetrics } from "~~/hooks/useVaultMetrics";
+import { useVaultInfo } from "~~/hooks/useVaultInfo";
+import { trellisVaultAbi } from "~~/contracts/abi";
 
 type VaultOverviewCardProps = {
   vault: VaultConfig;
   network: VaultNetworkConfig;
-  decimals?: number;
 };
 
-export const VaultOverviewCard = ({ vault, network, decimals = 6 }: VaultOverviewCardProps) => {
+export const VaultOverviewCard = ({ vault, network }: VaultOverviewCardProps) => {
+  if (!network.address) {
+    return (
+      <div className="flex flex-col space-y-4 rounded-3xl border border-base-300 bg-base-200/40 p-6">
+        <div>
+          <h2 className="text-xl font-semibold">{vault.name}</h2>
+          <p className="text-sm text-base-content/70">
+            {vault.assetSymbol} on {network.chainName}
+          </p>
+        </div>
+        <p className="text-sm text-base-content/60">Deployment pending — provide addresses in configuration to enable metrics.</p>
+      </div>
+    );
+  }
+
+  const { assetDecimals, assetSymbol } = useVaultInfo({ address: network.address, chainId: network.chainId });
+  const decimals = assetDecimals ?? 18;
+
+  const { data: paused } = useReadContract({
+    address: network.address,
+    abi: trellisVaultAbi,
+    functionName: "paused",
+    chainId: network.chainId,
+    query: {
+      enabled: Boolean(network.address),
+    },
+  });
+
   const { metrics, isLoading } = useVaultMetrics({
     address: network.address,
     chainId: network.chainId,
@@ -40,11 +69,17 @@ export const VaultOverviewCard = ({ vault, network, decimals = 6 }: VaultOvervie
         </div>
         <div className="flex flex-col">
           <span className="text-base-content/60">TVL</span>
-          <span className="font-medium">{isLoading ? "Loading..." : `${tvl} ${vault.assetSymbol}`}</span>
+          <span className="font-medium">{isLoading ? "Loading..." : `${tvl} ${assetSymbol || vault.assetSymbol}`}</span>
         </div>
         <div className="flex flex-col">
           <span className="text-base-content/60">Share Price</span>
           <span className="font-medium">{isLoading ? "Loading..." : metrics?.pricePerShare ?? "0"}</span>
+        </div>
+        <div className="flex flex-col">
+          <span className="text-base-content/60">Status</span>
+          <span className={`font-medium ${paused ? "text-warning" : "text-success"}`}>
+            {paused ? "Paused" : "Active"}
+          </span>
         </div>
       </div>
     </div>

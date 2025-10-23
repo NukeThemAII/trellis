@@ -3,7 +3,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { notFound, useParams } from "next/navigation";
 import { formatUnits, isAddress, parseUnits } from "viem";
-import { useAccount, useChainId, useSwitchChain, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
+import {
+  useAccount,
+  useChainId,
+  useReadContract,
+  useSwitchChain,
+  useWaitForTransactionReceipt,
+  useWriteContract,
+} from "wagmi";
 import { Address } from "~~/components/scaffold-eth";
 import { findVaultByAddress, findStrategyForVault } from "~~/config/vaults";
 import { VaultOverviewCard } from "~~/components/vaults/VaultOverviewCard";
@@ -36,6 +43,7 @@ const DepositCard = ({
   assetDecimals,
   allowance,
   refetchAllowance,
+  isPaused,
   onComplete,
 }: {
   vaultAddress: HexAddress;
@@ -45,6 +53,7 @@ const DepositCard = ({
   assetDecimals: number;
   allowance: bigint;
   refetchAllowance: () => Promise<unknown>;
+  isPaused: boolean;
   onComplete: () => Promise<void> | void;
 }) => {
   const { address: account } = useAccount();
@@ -61,6 +70,7 @@ const DepositCard = ({
 
   const currentAllowance = allowance ?? 0n;
   const needsApproval = parsedAmount !== null && account && parsedAmount > 0n && currentAllowance < parsedAmount;
+  const interactionDisabled = isPaused || !account;
 
   const {
     writeContract: writeApprove,
@@ -134,14 +144,16 @@ const DepositCard = ({
           className="input input-bordered input-primary"
           placeholder={`Amount in ${assetSymbol}`}
           value={amount}
+          disabled={interactionDisabled}
           onChange={(event) => setAmount(event.target.value)}
         />
+        {isPaused && <p className="text-sm text-warning">Vault is paused; deposits are temporarily disabled.</p>}
         {error && <p className="text-sm text-error">{error}</p>}
         <div className="flex flex-wrap gap-3">
           {needsApproval && (
             <button
               className="btn btn-outline btn-sm"
-              disabled={isApprovePending || isApproveMining || parsedAmount === null}
+              disabled={interactionDisabled || isApprovePending || isApproveMining || parsedAmount === null}
               onClick={handleApprove}
             >
               {isApprovePending || isApproveMining ? "Approving..." : `Approve ${assetSymbol}`}
@@ -149,7 +161,14 @@ const DepositCard = ({
           )}
           <button
             className="btn btn-primary btn-sm"
-            disabled={!account || parsedAmount === null || parsedAmount === 0n || isDepositPending || isDepositMining || needsApproval}
+            disabled={
+              interactionDisabled ||
+              parsedAmount === null ||
+              parsedAmount === 0n ||
+              isDepositPending ||
+              isDepositMining ||
+              needsApproval
+            }
             onClick={handleDeposit}
           >
             {isDepositPending || isDepositMining ? "Depositing..." : "Deposit"}
@@ -165,12 +184,14 @@ const WithdrawCard = ({
   assetSymbol,
   assetDecimals,
   chainId,
+  isPaused,
   onComplete,
 }: {
   vaultAddress: HexAddress;
   assetSymbol: string;
   assetDecimals: number;
   chainId: number;
+  isPaused: boolean;
   onComplete: () => Promise<void> | void;
 }) => {
   const { address: account } = useAccount();
@@ -228,12 +249,21 @@ const WithdrawCard = ({
           className="input input-bordered input-primary"
           placeholder={`Amount in ${assetSymbol}`}
           value={amount}
+          disabled={isPaused || !account}
           onChange={(event) => setAmount(event.target.value)}
         />
+        {isPaused && <p className="text-sm text-warning">Vault is paused; withdrawals will resume once unpaused.</p>}
         {error && <p className="text-sm text-error">{error}</p>}
         <button
           className="btn btn-secondary btn-sm"
-          disabled={!account || parsedAmount === null || parsedAmount === 0n || isWithdrawPending || isWithdrawMining}
+          disabled={
+            isPaused ||
+            !account ||
+            parsedAmount === null ||
+            parsedAmount === 0n ||
+            isWithdrawPending ||
+            isWithdrawMining
+          }
           onClick={handleWithdraw}
         >
           {isWithdrawPending || isWithdrawMining ? "Withdrawing..." : "Withdraw"}
@@ -258,33 +288,48 @@ const VaultPage = () => {
   const { vault, network } = matchingVault;
   const expectedChainId = network.chainId;
 
-  const { metrics, isLoading: metricsLoading, refetch: refetchMetrics } = useVaultMetrics({
+  const { assetAddress, assetDecimals, assetSymbol } = useVaultInfo({
     address: network.address,
     chainId: expectedChainId,
   });
 
-  const { assetAddress, assetDecimals, assetSymbol } = useVaultInfo({
+  const decimalsForDisplay = assetDecimals ?? 18;
+
+  const { metrics, isLoading: metricsLoading, refetch: refetchMetrics } = useVaultMetrics({
     address: network.address,
     chainId: expectedChainId,
+    decimals: decimalsForDisplay,
   });
 
   const { userShares, walletBalance, allowance, formattedBalance, refetch: refetchUser } = useVaultUserState({
     vaultAddress: network.address,
     assetAddress,
     chainId: expectedChainId,
-    assetDecimals,
+    assetDecimals: decimalsForDisplay,
   });
 
   const strategyAddress = useStrategyAddress(expectedChainId);
   const usdFeed = parseEnvAddress(process.env.NEXT_PUBLIC_CHAINLINK_USD_FEED);
   const usdPrice = useUsdPrice({ feed: usdFeed, chainId: expectedChainId });
 
-  const totalAssetsFormatted = metrics ? formatUnits(metrics.totalAssets, assetDecimals) : "0";
-  const totalSupplyFormatted = metrics ? formatUnits(metrics.totalSupply, assetDecimals) : "0";
-  const userSharesFormatted = formatUnits(userShares, assetDecimals);
+  const { data: paused } = useReadContract({
+    address: network.address,
+    abi: trellisVaultAbi,
+    functionName: "paused",
+    chainId: expectedChainId,
+    query: {
+      enabled: Boolean(network.address),
+    },
+  });
+  const isPaused = Boolean(paused);
+
+  const displaySymbol = assetSymbol || vault.assetSymbol;
+  const totalAssetsFormatted = metrics ? formatUnits(metrics.totalAssets, decimalsForDisplay) : "0";
+  const totalSupplyFormatted = metrics ? formatUnits(metrics.totalSupply, decimalsForDisplay) : "0";
+  const userSharesFormatted = formatUnits(userShares, decimalsForDisplay);
   const userAssets = metrics && metrics.totalSupply > 0n ? (metrics.totalAssets * userShares) / metrics.totalSupply : 0n;
-  const userAssetsFormatted = formatUnits(userAssets, assetDecimals);
-  const tvlUsd = usdPrice && metrics ? (usdPrice * Number(formatUnits(metrics.totalAssets, assetDecimals))) : undefined;
+  const userAssetsFormatted = formatUnits(userAssets, decimalsForDisplay);
+  const tvlUsd = usdPrice && metrics ? usdPrice * Number(formatUnits(metrics.totalAssets, decimalsForDisplay)) : undefined;
 
   const refetchAll = async () => {
     await Promise.all([refetchMetrics(), refetchUser()]);
@@ -331,13 +376,19 @@ const VaultPage = () => {
         </div>
       )}
 
-      <VaultOverviewCard vault={vault} network={network} decimals={assetDecimals} />
+      {isPaused && (
+        <div className="rounded-3xl border border-warning bg-warning/10 p-4">
+          <p className="text-sm">Vault is currently paused; deposits and withdrawals are disabled until the owner resumes operations.</p>
+        </div>
+      )}
+
+      <VaultOverviewCard vault={vault} network={network} />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="rounded-3xl border border-base-300 bg-base-200/40 p-6">
           <h3 className="text-lg font-semibold">Vault Metrics</h3>
           <div className="mt-4 grid gap-3 text-sm">
-            <Stat label="Total Assets" value={`${totalAssetsFormatted} ${assetSymbol}`} loading={metricsLoading} />
+            <Stat label="Total Assets" value={`${totalAssetsFormatted} ${displaySymbol}`} loading={metricsLoading} />
             <Stat label="Total Supply (shares)" value={totalSupplyFormatted} loading={metricsLoading} />
             <Stat label="Share Price" value={metrics?.pricePerShare ?? "0"} loading={metricsLoading} />
             <Stat label="High Water Mark" value={metrics ? metrics.highWaterMark.toString() : "0"} loading={metricsLoading} />
@@ -347,10 +398,10 @@ const VaultPage = () => {
         <div className="rounded-3xl border border-base-300 bg-base-200/40 p-6">
           <h3 className="text-lg font-semibold">Your Position</h3>
           <div className="mt-4 grid gap-3 text-sm">
-            <Stat label="Wallet Balance" value={`${formattedBalance} ${assetSymbol}`} />
+            <Stat label="Wallet Balance" value={`${formattedBalance} ${displaySymbol}`} />
             <Stat label="Vault Shares" value={userSharesFormatted} />
-            <Stat label="Vault Assets" value={`${userAssetsFormatted} ${assetSymbol}`} />
-            <Stat label="Allowance" value={`${formatUnits(allowance ?? 0n, assetDecimals)} ${assetSymbol}`} />
+            <Stat label="Vault Assets" value={`${userAssetsFormatted} ${displaySymbol}`} />
+            <Stat label="Allowance" value={`${formatUnits(allowance ?? 0n, decimalsForDisplay)} ${displaySymbol}`} />
           </div>
         </div>
       </div>
@@ -361,10 +412,11 @@ const VaultPage = () => {
             vaultAddress={network.address}
             assetAddress={assetAddress}
             chainId={expectedChainId}
-            assetSymbol={assetSymbol || vault.assetSymbol}
-            assetDecimals={assetDecimals}
+            assetSymbol={displaySymbol}
+            assetDecimals={decimalsForDisplay}
             allowance={allowance}
             refetchAllowance={refetchUser}
+            isPaused={isPaused}
             onComplete={refetchAll}
           />
         )}
@@ -372,8 +424,9 @@ const VaultPage = () => {
           <WithdrawCard
             vaultAddress={network.address}
             chainId={expectedChainId}
-            assetSymbol={assetSymbol || vault.assetSymbol}
-            assetDecimals={assetDecimals}
+            assetSymbol={displaySymbol}
+            assetDecimals={decimalsForDisplay}
+            isPaused={isPaused}
             onComplete={refetchAll}
           />
         )}

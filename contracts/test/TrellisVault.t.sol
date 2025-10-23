@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.25;
 
-import { Test } from "forge-std/Test.sol";
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import { ERC4626 } from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
+import {Test} from "forge-std/Test.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {ERC4626} from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
 
-import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
-import { TrellisVault } from "../src/TrellisVault.sol";
-import { StrategyERC4626 } from "../src/strategies/StrategyERC4626.sol";
-import { IStrategy } from "../src/interfaces/IStrategy.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+import {TrellisVault} from "../src/TrellisVault.sol";
+import {StrategyERC4626} from "../src/strategies/StrategyERC4626.sol";
+import {IStrategy} from "../src/interfaces/IStrategy.sol";
 
 contract MockERC20 is ERC20 {
     uint8 private immutable _decimals;
@@ -31,7 +31,7 @@ contract MockERC4626Target is ERC20, ERC4626 {
     constructor(MockERC20 asset_)
         ERC20(string(abi.encodePacked("Target-", asset_.symbol())), string(abi.encodePacked("t", asset_.symbol())))
         ERC4626(asset_)
-    { }
+    {}
 
     function decimals() public view override(ERC20, ERC4626) returns (uint8) {
         return super.decimals();
@@ -209,5 +209,44 @@ contract TrellisVaultTest is Test {
         assertEq(address(vault.strategy()), address(newStrategy));
         assertEq(target.balanceOf(address(strategy)), 0);
         assertGt(newTarget.balanceOf(address(newStrategy)), 0);
+        assertEq(assetToken.balanceOf(address(newStrategy)), 0);
+    }
+
+    function testStrategyUpdateReinvestsIdle() public {
+        _deposit(USER, 30 * ONE);
+
+        MockERC4626Target newTarget = new MockERC4626Target(assetToken);
+
+        vm.prank(OWNER);
+        strategy.updateTarget(newTarget);
+
+        assertGt(newTarget.balanceOf(address(strategy)), 0);
+        assertEq(assetToken.balanceOf(address(strategy)), 0);
+    }
+
+    function testHarvesterRole() public {
+        uint256 amount = 100 * ONE;
+        _deposit(USER, amount);
+
+        vm.prank(USER);
+        vm.expectRevert(TrellisVault.UnauthorizedHarvester.selector);
+        vault.harvest();
+
+        vm.prank(OWNER);
+        vault.harvest();
+
+        vm.prank(OWNER);
+        vault.setHarvester(KEEP);
+
+        assetToken.mint(address(target), 5 * ONE);
+        vm.prank(KEEP);
+        vault.harvest();
+
+        vm.prank(OWNER);
+        vault.setHarvester(address(0));
+
+        vm.prank(KEEP);
+        vm.expectRevert(TrellisVault.UnauthorizedHarvester.selector);
+        vault.harvest();
     }
 }

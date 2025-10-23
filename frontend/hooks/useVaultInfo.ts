@@ -45,7 +45,7 @@ export const useVaultInfo = (params: { address?: HexAddress; chainId?: number })
           chainId,
         },
       ] as const)
-    : ([] as const);
+    : undefined;
 
   const { data: metadata } = useReadContracts({
     query: {
@@ -55,7 +55,10 @@ export const useVaultInfo = (params: { address?: HexAddress; chainId?: number })
     contracts,
   });
 
-  const [vaultDecimals, vaultSymbol, assetDecimals, assetSymbol] = metadata ?? [];
+  const vaultDecimals = metadata && metadata[0]?.status === "success" ? (metadata[0]?.result as number) : undefined;
+  const vaultSymbol = metadata && metadata[1]?.status === "success" ? (metadata[1]?.result as string) : undefined;
+  const assetDecimals = metadata && metadata[2]?.status === "success" ? (metadata[2]?.result as number) : undefined;
+  const assetSymbol = metadata && metadata[3]?.status === "success" ? (metadata[3]?.result as string) : undefined;
 
   return useMemo(
     () => ({

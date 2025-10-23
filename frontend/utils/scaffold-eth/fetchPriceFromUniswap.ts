@@ -53,8 +53,12 @@ export const fetchPriceFromUniswap = async (targetNetwork: ChainWithAttributes):
       ...wagmiConfig,
       functionName: "token1",
     });
-    const token0 = [TOKEN, DAI].find(token => token.address === token0Address) as Token;
-    const token1 = [TOKEN, DAI].find(token => token.address === token1Address) as Token;
+    const token0 = [TOKEN, DAI].find(token => token.address === token0Address);
+    const token1 = [TOKEN, DAI].find(token => token.address === token1Address);
+    if (!token0 || !token1) {
+      console.error("Unable to resolve token pair for pricing");
+      return 0;
+    }
     const pair = new Pair(
       CurrencyAmount.fromRawAmount(token0, reserves[0].toString()),
       CurrencyAmount.fromRawAmount(token1, reserves[1].toString()),

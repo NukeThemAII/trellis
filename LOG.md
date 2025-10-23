@@ -1,3 +1,11 @@
+## 2025-10-23T16:37:51Z [Code|Frontend|Docs|Ops]
+- Summary: Secured strategy migrations, introduced a delegated harvester role, updated the keeper workflow, and polished the UI data layer (decimals, paused state, USD feed validation).
+- Versions: Node=24.6.0, Next=16.0.0, wagmi=2.18.2, rainbowkit=2.2.9, viem=2.38.3, Foundry=1.4.3, OZ=5.4.0
+- Changes: contracts/src/TrellisVault.sol, contracts/src/strategies/StrategyERC4626.sol, contracts/test/TrellisVault.t.sol, ops/keeper/harvest.ts, ops/.env.example, ops/README.md, contracts/.env.example, frontend/app/vault/[address]/page.tsx, frontend/components/vaults/VaultOverviewCard.tsx, frontend/hooks/useVaultMetrics.ts, frontend/hooks/useVaultInfo.ts, frontend/hooks/useVaultUserState.ts, frontend/hooks/useUsdPrice.ts, frontend/components/ThemeProvider.tsx, frontend/next.config.ts, frontend/utils/scaffold-eth/fetchPriceFromUniswap.ts, README.md
+- Decisions: Added `setHarvester` to allow dedicated automation keys, forced StrategyERC4626 to redeploy idle balances on target updates, tightened the keeper script to enforce harvester checks, and improved frontend accuracy by fetching live decimals, honoring paused state, and rejecting stale Chainlink data.
+- Next: 1) Extend Foundry tests for keeper role edge cases (e.g., harvester reset to zero with pending txs). 2) Add frontend event/telemetry panels for vault history. 3) Document operational playbooks for harvester rotation and strategy upgrades.
+- Reviewer: TBD
+
 ## 2025-10-23T15:05:00Z [Docs]
 - Summary: Added document control metadata to AUDIT.md to clarify publication status and review cadence after prepping the audit for GitHub push.
 - Versions: Node=24.6.0, Next=16.0.0, wagmi=2.18.2, rainbowkit=2.2.9, viem=2.38.3, Foundry=1.4.3, OZ=5.4.0

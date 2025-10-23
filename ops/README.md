@@ -22,11 +22,12 @@ Environment variables (place in `ops/.env` or export prior to running):
 - `RPC_URL` — HTTPS RPC endpoint for the selected network
 - `VAULT_ADDRESS` — deployed TrellisVault contract address
 - `KEEPER_PK` — keeper private key (`0x`-prefixed, never commit)
+- `HARVESTER_ADDRESS` — optional, expected harvester account (the script verifies it matches `vault.harvester()`)
 - `MIN_FEE_BPS` — minimum fee accrual (in basis points of profit) before triggering a harvest (default `5`)
 
-The script relies on the ABI fragment inline; regenerate from Foundry artifacts when interfaces change.
+The script checks that the configured harvester matches the signing key; call `setHarvester(address)` on the vault before automating harvests. Regenerate the ABI fragment whenever the vault interface changes.
 
 ## Runbooks
 
-- `docs/runbooks/incident.md` (coming soon) will outline pause/escalation procedures.
+- `docs/runbooks/incident-response.md` outlines pause/escalation procedures.
 - Add new runbooks here and reference them from `README.md` when processes stabilize.
