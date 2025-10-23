@@ -84,6 +84,36 @@ git rebase origin/main
 
 Resolve any conflicts, then continue (`git rebase --continue`).
 
+### Handling Merge or Rebase Conflicts
+
+If the rebase (or a `git merge`) reports conflicts:
+
+1. **Inspect conflicted files** using `git status` to see the list.
+2. **Open each file** and resolve the `<<<<<<<`, `=======`, `>>>>>>>` markers by choosing the correct code/doc content.
+3. **Mark the conflict as resolved** once edits are complete:
+
+   ```bash
+   git add <file>
+   ```
+
+4. **Continue the rebase/merge**:
+
+   ```bash
+   git rebase --continue   # if rebasing
+   # or
+   git merge --continue    # if merging
+   ```
+
+5. If you need to abort and start over:
+
+   ```bash
+   git rebase --abort
+   # or
+   git merge --abort
+   ```
+
+Re-run tests or checks affected by the resolved files before pushing.
+
 ## 7. Push to GitHub
 
 Push your branch (replace `work` with your branch name if different):

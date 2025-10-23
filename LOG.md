@@ -1,3 +1,11 @@
+## 2025-10-24T10:30:00Z [Docs]
+- Summary: Expanded the GitHub publishing runbook with explicit conflict-resolution steps so pushes can proceed smoothly even when rebasing or merging.
+- Versions: Node=24.6.0, Next=16.0.0, wagmi=2.18.2, rainbowkit=2.2.9, viem=2.38.3, Foundry=1.4.3, OZ=5.4.0
+- Changes: docs/runbooks/github-push.md, LOG.md
+- Decisions: Documented both rebase and merge flows to match our preferred conventional history while giving operators an abort path.
+- Next: Review CI automation to auto-detect stale branches before merge.
+- Reviewer: TBD
+
 ## 2025-10-24T09:00:00Z [Code|Test|Frontend|Docs|Ops]
 - Summary: Closed medium/low audit items by redeploying assets during strategy migrations, introducing a dedicated harvester role + keeper guardrails, threading asset decimals into UI metrics, validating Chainlink feed freshness, and restoring the documented env templates/docs.
 - Versions: Node=24.6.0, Next=16.0.0, wagmi=2.18.2, rainbowkit=2.2.9, viem=2.38.3, Foundry=1.4.3, OZ=5.4.0
