@@ -7,7 +7,7 @@
 - **Node.js** 24.6.0 (Latest LTS)
 - **pnpm** 10.19.0 (workspace package manager)
 - **Next.js** 16.0.0 + **React** 19.0.0 + **TypeScript** 5.9.3
-- **wagmi** 2.18.2 • **@rainbow-me/rainbowkit** 2.2.9 • **viem** 2.38.3
+- **wagmi** 2.18.2 • **@rainbow-me/rainbowkit** 2.2.9 • **viem** 2.38.3 (WalletConnect stack pinned via pnpm overrides to 2.22.x for React 19 compatibility)
 - **Foundry** 1.4.3-stable • **OpenZeppelin Contracts** 5.4.0
 - **Linting/Formatting:** ESLint 9, Prettier 3, Tailwind CSS 4
 
@@ -19,7 +19,7 @@
 / (trellis)
 ├─ contracts/        # Foundry workspace (src/, script/, test/)
 ├─ frontend/         # Next.js app with RainbowKit/wagmi/viem
-├─ ops/              # Keeper scripts and runbooks (TBD)
+├─ ops/              # Keeper automation + operational docs
 ├─ docs/             # Architecture notes + addresses.<network>.json
 ├─ .github/workflows # GitHub Actions (contracts & frontend pipelines)
 ├─ AGENTS.md         # Source of truth for requirements
@@ -32,24 +32,24 @@
 ## Development Setup
 
 ```bash
-pnpm install        # install workspace dependencies
-pnpm contracts:test # run Foundry test suite (placeholder)
-pnpm frontend:dev   # launch Next.js dev server (localhost:3000)
+pnpm install                      # workspace dependencies
+pnpm contracts:build              # forge build (TrellisVault + Strategy)
+pnpm contracts:test               # run Foundry unit tests
+pnpm frontend:dev                 # launch Next.js dev server (localhost:3000)
 ```
 
-Environment variables:
+Environment templates:
 
-- `contracts/.env` — RPC URLs, deployer key, owner, fee recipient, asset/strategy addresses (never commit secrets).
-- `frontend/.env.local` — RPC endpoints (`NEXT_PUBLIC_RPC_URL`), supported networks, feature flags.
-
-Sample env files will be added alongside implementation.
+- `contracts/.env.example` — RPC URLs, deployer key, owner, fee recipient, asset + target addresses.
+- `frontend/.env.local.example` — public RPC env, walletconnect project id, default vault metadata.
+- `ops/.env.example` — keeper configuration for harvest automation.
 
 ## Contracts Module (Foundry)
 
-* `src/` will host the ERC-4626 vault, performance-fee accounting (10% via fee shares and high-water mark), and strategy interfaces.
-* `script/Deploy.s.sol` will deploy vault + strategy on Base / Base Sepolia.
-* Tests will cover accounting invariants, pause/sweep guards, strategy upgrades, and fuzz rounding.
-* Static analysis will run via **Slither** in CI.
+* `src/TrellisVault.sol` — ERC-4626 vault with high-water-mark fee sharing (default 10%), pausable entry points, guarded sweep, and strategy routing.
+* `src/strategies/StrategyERC4626.sol` — pluggable adapter that wraps an upstream ERC-4626 vault (Euler v2 Earn in MVP) with allowance hygiene + target migration controls.
+* `test/TrellisVault.t.sol` — Foundry tests covering deposit/withdraw flows, fee accrual, pause/sweep enforcement, and strategy migration.
+* Static analysis (`slither`) executes via CI; `forge fmt` keeps Solidity style aligned.
 
 Common commands:
 
@@ -76,8 +76,9 @@ pnpm dev
 
 ## Ops & Documentation
 
-* `ops/` will include keeper automation (`harvest()` cadence + profit threshold), incident runbooks, and monitoring hooks.
-* `docs/addresses.base.json` / `docs/addresses.base-sepolia.json` track deployments (address, block number, verification URL).
+* `ops/keeper/harvest.ts` — viem-based keeper script that checks high-water earnings and triggers `harvest()` when the configured fee threshold is met.
+* `docs/runbooks/incident-response.md` (initial draft) outlines pause + withdraw-all steps for production incidents.
+* `docs/addresses.base*.json` hold deployment metadata (addresses, blocks, verification URLs).
 * Every material change updates **README.md** and appends **LOG.md** with a version audit.
 
 ## Security Invariants

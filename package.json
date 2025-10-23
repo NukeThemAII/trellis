@@ -13,5 +13,14 @@
     "contracts:build": "pnpm --filter @trellis/contracts build",
     "contracts:test": "pnpm --filter @trellis/contracts test",
     "frontend:dev": "pnpm --filter @trellis/frontend dev"
+  },
+  "pnpm": {
+    "overrides": {
+      "@walletconnect/ethereum-provider": "2.22.4",
+      "@walletconnect/sign-client": "2.22.4",
+      "@walletconnect/universal-provider": "2.22.4",
+      "@walletconnect/utils": "2.22.4",
+      "@reown/appkit": "1.8.9"
+    }
   }
 }

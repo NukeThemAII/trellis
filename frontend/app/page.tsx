@@ -25,17 +25,17 @@ const Home: NextPage = () => {
           <p className="text-center text-lg">
             Get started by editing{" "}
             <code className="italic bg-base-300 text-base font-bold max-w-full break-words break-all inline-block">
-              packages/nextjs/app/page.tsx
+              frontend/app/page.tsx
             </code>
           </p>
           <p className="text-center text-lg">
-            Edit your smart contract{" "}
+            Core vault logic lives in{" "}
             <code className="italic bg-base-300 text-base font-bold max-w-full break-words break-all inline-block">
-              YourContract.sol
+              contracts/src/TrellisVault.sol
             </code>{" "}
-            in{" "}
+            and{" "}
             <code className="italic bg-base-300 text-base font-bold max-w-full break-words break-all inline-block">
-              packages/hardhat/contracts
+              contracts/src/strategies/StrategyERC4626.sol
             </code>
           </p>
         </div>
