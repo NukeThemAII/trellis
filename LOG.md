@@ -1,3 +1,11 @@
+## 2025-10-23T12:59:15Z [Code|Frontend|Ops]
+- Summary: Generated frontend contract artifacts from deployments, delivered vault detail flows (deposit/withdraw with allowances + pricing), and built the admin control surface for pause/harvest/strategy management.
+- Versions: Node=24.6.0, Next=16.0.0, wagmi=2.18.2, rainbowkit=2.2.9, viem=2.38.3, Foundry=1.4.3, OZ=5.4.0
+- Changes: scripts/generate-frontend-artifacts.mjs, frontend/contracts/abi/*, frontend/contracts/deployedContracts.ts, package.json, frontend/config/vaults.ts, frontend/app/vault/[address]/page.tsx, frontend/hooks/useVaultInfo.ts, frontend/hooks/useVaultUserState.ts, frontend/hooks/useUsdPrice.ts, frontend/components/vaults/VaultOverviewCard.tsx, frontend/app/admin/page.tsx, frontend/types/shims.d.ts, frontend/.env.local.example, README.md
+- Decisions: Consolidated ABI/deployment generation to one script with env fallbacks for Base networks; vault detail UI enforces ERC20 approval flow and surfaces USD valuations via optional Chainlink feed; admin actions gated by vault ownership with network mismatch guardrails.
+- Next: 1) Integrate broadcast outputs once Sepolia deployment occurs to auto-populate deployedContracts. 2) Implement per-vault activity/event feeds on detail pages. 3) Enhance admin view with fee recipient updates and strategy address validation against allowlists.
+- Reviewer: TBD
+
 ## 2025-10-23T12:37:47Z [Code|Frontend|Docs|Ops]
 - Summary: Generated typed ABIs for Trellis contracts, parameterized the deployment script + env templates, and bootstrapped frontend vault config/metrics wiring against Base/Base Sepolia networks.
 - Versions: Node=24.6.0, Next=16.0.0, wagmi=2.18.2, rainbowkit=2.2.9, viem=2.38.3, Foundry=1.4.3, OZ=5.4.0

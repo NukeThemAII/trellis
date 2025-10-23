@@ -35,14 +35,14 @@
 pnpm install                      # workspace dependencies
 pnpm contracts:build              # forge build (TrellisVault + Strategy)
 pnpm contracts:test               # run Foundry unit tests
-pnpm generate:abis                # sync ABI exports for the frontend
+pnpm generate:artifacts           # sync ABIs + deployed contracts for the frontend
 pnpm frontend:dev                 # launch Next.js dev server (localhost:3000)
 ```
 
 Environment templates:
 
 - `contracts/.env.example` — RPC URLs, deployer key, owner, fee recipient, asset + target addresses.
-- `frontend/.env.local.example` — public RPC env, walletconnect project id, default vault metadata.
+- `frontend/.env.local.example` — public RPC env, walletconnect project id, default vault/strategy addresses, optional Chainlink price feed.
 - `ops/.env.example` — keeper configuration for harvest automation.
 
 ## Contracts Module (Foundry)

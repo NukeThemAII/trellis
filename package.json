@@ -13,7 +13,7 @@
     "contracts:build": "pnpm --filter @trellis/contracts build",
     "contracts:test": "pnpm --filter @trellis/contracts test",
     "frontend:dev": "pnpm --filter @trellis/frontend dev",
-    "generate:abis": "node scripts/generate-frontend-abis.mjs"
+    "generate:artifacts": "node scripts/generate-frontend-artifacts.mjs"
   },
   "devDependencies": {
     "prettier": "^3.5.3"
