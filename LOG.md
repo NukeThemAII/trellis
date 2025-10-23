@@ -1,3 +1,11 @@
+## 2025-10-23T15:05:00Z [Docs]
+- Summary: Added document control metadata to AUDIT.md to clarify publication status and review cadence after prepping the audit for GitHub push.
+- Versions: Node=24.6.0, Next=16.0.0, wagmi=2.18.2, rainbowkit=2.2.9, viem=2.38.3, Foundry=1.4.3, OZ=5.4.0
+- Changes: AUDIT.md, LOG.md
+- Decisions: Confirmed audit remains accurate; documented release state to satisfy publication request.
+- Next: Monitor remediation progress and update audit once medium-severity findings are addressed.
+- Reviewer: TBD
+
 ## 2025-10-23T12:59:15Z [Code|Frontend|Ops]
 - Summary: Generated frontend contract artifacts from deployments, delivered vault detail flows (deposit/withdraw with allowances + pricing), and built the admin control surface for pause/harvest/strategy management.
 - Versions: Node=24.6.0, Next=16.0.0, wagmi=2.18.2, rainbowkit=2.2.9, viem=2.38.3, Foundry=1.4.3, OZ=5.4.0
