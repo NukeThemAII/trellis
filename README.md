@@ -1,143 +1,100 @@
-# README.md — Trellis Vaults (Latest‑First)
+# Trellis Vaults — Latest-First
 
-**Trellis Vaults** is a secure, modular **ERC‑4626 yield vault** dApp for **Base**. Start with **one USDT vault** routed to **Euler v2 Earn (ERC‑4626)** if available; otherwise **USDC**. Add more vaults via adapters (Aave v3, Compound v3/Comet, Morpho).
+**Trellis Vaults** is a secure, modular **ERC-4626 yield vault** platform for **Base**. The MVP focuses on a single-asset vault (USDT preferred; fallback to USDC) that routes liquidity into an ERC-4626 compliant strategy (Euler v2 Earn when available). The system is designed for plug-and-play strategy adapters so additional vaults can be onboarded with minimal lift.
 
-## Features
+## Stack & Tooling (Resolved 2025-01-23)
 
-* **ERC‑4626 vault** with predictable accounting
-* **Pluggable strategies** (start with ERC‑4626 adapter for Euler v2)
-* **10% performance fee** on profits via **fee shares** + high‑water mark
-* **Pausable, Reentrancy‑safe, Ownable**
-* **Next.js (latest)** + **RainbowKit/wagmi/viem** UI
+- **Node.js** 24.6.0 (Latest LTS)
+- **pnpm** 10.19.0 (workspace package manager)
+- **Next.js** 16.0.0 + **React** 19.0.0 + **TypeScript** 5.9.3
+- **wagmi** 2.18.2 • **@rainbow-me/rainbowkit** 2.2.9 • **viem** 2.38.3
+- **Foundry** 1.4.3-stable • **OpenZeppelin Contracts** 5.4.0
+- **Linting/Formatting:** ESLint 9, Prettier 3, Tailwind CSS 4
 
-## Architecture
+> We selected **Scaffold-ETH 2 (Foundry preset)** as the foundation, then refactored the generated structure into the required monorepo layout (`contracts/`, `frontend/`, `ops/`, `docs/`) and migrated tooling to pnpm for deterministic installs.
 
-* **Vault** holds underlying (USDT or USDC). `afterDeposit` → Strategy; `beforeWithdraw` pulls liquidity back.
-* **StrategyERC4626** wraps any ERC‑4626 target vault (e.g., Euler v2 Earn); target upgradable by owner.
-* **Keeper** periodically calls `harvest()` (profit or time‑based).
+## Repository Layout
 
-```mermaid
-graph TD
-User-->UI
-UI-->Vault
-Vault-->Strategy
-Strategy-->TargetERC4626
-TargetERC4626-->Strategy
-Strategy-->Vault
+```
+/ (trellis)
+├─ contracts/        # Foundry workspace (src/, script/, test/)
+├─ frontend/         # Next.js app with RainbowKit/wagmi/viem
+├─ ops/              # Keeper scripts and runbooks (TBD)
+├─ docs/             # Architecture notes + addresses.<network>.json
+├─ .github/workflows # GitHub Actions (contracts & frontend pipelines)
+├─ AGENTS.md         # Source of truth for requirements
+├─ LOG.md            # Append-only work log + version audits
+├─ README.md         # This file
+├─ LICENSE (MIT)
+└─ CODE_OF_CONDUCT.md
 ```
 
-## Tech Stack (Latest‑First)
-
-* **Contracts:** Solidity ^0.8.20, Foundry (latest), OpenZeppelin (latest)
-* **Frontend:** Next.js (latest), React (latest), TypeScript, Tailwind + shadcn/ui, RainbowKit + wagmi + viem
-* **CI:** GitHub Actions • **Lint/Format:** ESLint, Prettier, Solhint
-
-## Bootstrap
-
-### Option A — Scaffold‑ETH 2 (recommended)
+## Development Setup
 
 ```bash
-pnpm dlx create-eth@latest trellis
-# Choose Foundry
-cd trellis
-pnpm i
-pnpm dev   # frontend
-pnpm chain # local node
-pnpm deploy
+pnpm install        # install workspace dependencies
+pnpm contracts:test # run Foundry test suite (placeholder)
+pnpm frontend:dev   # launch Next.js dev server (localhost:3000)
 ```
 
-### Option B — From Scratch (Next.js + RainbowKit)
+Environment variables:
 
-```bash
-pnpm dlx create-next-app@latest trellis-frontend
-cd trellis-frontend
-pnpm create @rainbow-me/rainbowkit@latest
-pnpm i
-pnpm dev
-```
+- `contracts/.env` — RPC URLs, deployer key, owner, fee recipient, asset/strategy addresses (never commit secrets).
+- `frontend/.env.local` — RPC endpoints (`NEXT_PUBLIC_RPC_URL`), supported networks, feature flags.
 
-> The project uses a **monorepo layout** (`contracts/`, `frontend/`, `ops/`, `docs/`). If Option A creates a different structure, keep it and adapt paths, but retain the logical separation.
+Sample env files will be added alongside implementation.
 
-## Contracts — Quick Start
+## Contracts Module (Foundry)
+
+* `src/` will host the ERC-4626 vault, performance-fee accounting (10% via fee shares and high-water mark), and strategy interfaces.
+* `script/Deploy.s.sol` will deploy vault + strategy on Base / Base Sepolia.
+* Tests will cover accounting invariants, pause/sweep guards, strategy upgrades, and fuzz rounding.
+* Static analysis will run via **Slither** in CI.
+
+Common commands:
 
 ```bash
 cd contracts
-forge install
 forge build
 forge test -vvv
+forge fmt
 ```
 
-### Env
+## Frontend Module (Next.js)
 
-```
-# Base
-RPC_URL=https://mainnet.base.org
-DEPLOYER_PK=0x...
-OWNER=0xYourOpsMultisig
-FEE_RECIPIENT=0xYourRevenueWallet
-ASSET_TOKEN=0xAssetOnBase   # USDT preferred; else USDC
-TARGET_ERC4626=0xTargetVault # Euler v2 vault (matching underlying)
-```
+* App Router, dark theme with Trellis green accent, Tailwind + shadcn/ui.
+* Pages: `/` (vault list), `/vault/[address]` (details, deposit/withdraw), `/admin` (owner actions guarded by wallet address).
+* wagmi + RainbowKit preconfigured for Base / Base Sepolia chains.
+* Uses React Query for data fetching and `viem` for onchain reads (`totalAssets`, `convertTo*`, fees, high-water mark metrics).
 
-### Deploy
-
-```bash
-forge script script/Deploy.s.sol:Deploy \
-  --rpc-url $RPC_URL --broadcast --verify
-```
-
-## Frontend — Quick Start
+Local development:
 
 ```bash
 cd frontend
-pnpm i
 pnpm dev
 ```
 
-Create `.env.local`:
+## Ops & Documentation
 
-```
-NEXT_PUBLIC_NETWORK=base
-NEXT_PUBLIC_RPC_URL=https://mainnet.base.org
-```
+* `ops/` will include keeper automation (`harvest()` cadence + profit threshold), incident runbooks, and monitoring hooks.
+* `docs/addresses.base.json` / `docs/addresses.base-sepolia.json` track deployments (address, block number, verification URL).
+* Every material change updates **README.md** and appends **LOG.md** with a version audit.
 
-## Theme & UX
+## Security Invariants
 
-* Dark default with **Trellis green** accent.
-* Tailwind tokens: `--bg: #0b0f10`, `--muted: #0f1517`, `--accent: #22c55e`, `--text: #e6f1ee`
-* Components: rounded‑2xl cards, soft shadows, motion micro‑interactions.
+* No reentrancy on deposit, withdraw, harvest.
+* `pause()` halts user flows; owner can `withdrawAll` from strategy.
+* `sweep()` cannot move the underlying asset.
+* Performance fees apply only to realized profit (high-water mark).
+* Owner (Ops multisig) separate from `feeRecipient` wallet.
 
-## Adding a New Vault (Playbook)
+## Roadmap Highlights
 
-1. Verify ERC‑4626 target & underlying match (prefer USDT → else USDC).
-2. Deploy new Vault + Strategy; call `setStrategy`; verify and record addresses.
-3. Frontend: add vault config (name/icon/addresses/caps/decimals).
-4. Keeper: include in harvest schedule.
-5. Docs: update diagrams; append **LOG.md** with details.
+1. Implement ERC-4626 vault + strategy adapter + comprehensive tests.
+2. Integrate UI reads/actions, handle paused states, error surfacing, and gas estimation.
+3. Ship keeper script and incident response runbook.
+4. Deploy to Base Sepolia, verify, populate address book, and prepare mainnet rollout.
 
-## Operations
+---
 
-* **Harvest policy:** time‑based (e.g., every 24h) or profit threshold (fee value > gas).
-* **Pause runbook:** pause; `withdrawAll` from strategy; communicate status; postmortem in **LOG.md**.
-
-## Security Notes
-
-* No fee on loss; fee shares only on profit.
-* `sweep()` blocked for underlying.
-* Separate `owner` and `feeRecipient`.
-
-## Documentation Discipline
-
-* Update **README.md** and **LOG.md** after **every** material change.
-* Include version audit (Next, wagmi, RainbowKit, viem, Node) in each **LOG.md** entry.
-
-## Roadmap
-
-* Adapters: Aave v3, Compound v3 (Comet), Morpho Blue
-* UI: activity feed, caps, APR slot
-* Monitoring: health checks + alerts
-
-## Name & License
-
-* **Name:** Trellis Vaults
-* **License:** MIT
+For detailed requirements and operating rules, always refer to **AGENTS.md**.

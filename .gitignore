@@ -1,0 +1,39 @@
+# Node
+node_modules/
+.pnpm-store/
+.npm/
+
+# Next.js
+.next/
+out/
+.vercel/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Env
+.env
+.env.*
+.env.local
+.env.development.local
+.env.production.local
+.env.test.local
+
+# Editor
+.vscode/
+.idea/
+.DS_Store
+
+# Foundry / Solidity
+contracts/out/
+contracts/cache/
+contracts/broadcast/
+contracts/deployments/
+contracts/lib/
+
+# Misc
+coverage/
+dist/

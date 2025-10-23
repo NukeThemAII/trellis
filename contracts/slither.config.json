@@ -1,0 +1,13 @@
+{
+  "detectors_to_exclude": [
+    "solc-version",
+    "pragma"
+  ],
+  "filter_paths": [
+    "lib/",
+    "node_modules/"
+  ],
+  "solc_remaps": [
+    "@openzeppelin=lib/openzeppelin-contracts"
+  ]
+}

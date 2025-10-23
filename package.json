@@ -1,0 +1,17 @@
+{
+  "name": "trellis-vaults",
+  "private": true,
+  "version": "0.0.1",
+  "packageManager": "pnpm@10.19.0",
+  "engines": {
+    "node": ">=24.6.0"
+  },
+  "scripts": {
+    "build": "pnpm run -r build",
+    "lint": "pnpm run -r lint",
+    "test": "pnpm --filter @trellis/contracts test",
+    "contracts:build": "pnpm --filter @trellis/contracts build",
+    "contracts:test": "pnpm --filter @trellis/contracts test",
+    "frontend:dev": "pnpm --filter @trellis/frontend dev"
+  }
+}
