@@ -1,3 +1,11 @@
+## 2025-10-24T11:45:00Z [Docs]
+- Summary: Captured maintainer remediation commitments in the audit, bumped document control to v1.2, and ensured the log reflects the latest review context for conflict-free merges.
+- Versions: Node=24.6.0, Next=16.0.0, wagmi=2.18.2, rainbowkit=2.2.9, viem=2.38.3, Foundry=1.4.3, OZ=5.4.0
+- Changes: AUDIT.md, LOG.md
+- Decisions: Recorded the maintainer response inline so downstream branches inherit the same context and avoid repeated merge conflicts across documentation files.
+- Next: Monitor the implementation work that lands from the maintainer commitments and refresh the audit once those fixes are deployed.
+- Reviewer: TBD
+
 ## 2025-10-24T10:30:00Z [Docs]
 - Summary: Expanded the GitHub publishing runbook with explicit conflict-resolution steps so pushes can proceed smoothly even when rebasing or merging.
 - Versions: Node=24.6.0, Next=16.0.0, wagmi=2.18.2, rainbowkit=2.2.9, viem=2.38.3, Foundry=1.4.3, OZ=5.4.0

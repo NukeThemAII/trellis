@@ -1,4 +1,4 @@
-# Trellis Vaults Code & Ops Audit — 2025-10-23 (v1.1)
+# Trellis Vaults Code & Ops Audit — 2025-10-23 (v1.2)
 
 ## Executive Summary
 - The Trellis Vaults repository implements a single-strategy ERC-4626 vault with a plug-in adapter layer, a Next.js front-end, and basic operational tooling. Contracts follow best practices such as high-water-mark performance fees, pausable entry points, and non-reentrancy guards, and the monorepo wiring (CI, artifact generation scripts, and documentation) is largely in place.
@@ -33,6 +33,13 @@
    - **Recommendation.** Introduce a dedicated keeper role (e.g., via `AccessControl` or an allowlisted harvester) or redesign the script to operate through the multisig/API, and update docs/runbooks accordingly.
    - **Status.** Resolved — the vault exposes a mutable `harvester` role, tests cover delegation + unauthorized access, and the keeper script checks that the configured signer matches either the owner or harvester. Docs instruct ops to set the role before running automation.【F:contracts/src/TrellisVault.sol†L66-L203】【F:contracts/test/TrellisVault.t.sol†L174-L213】【F:ops/keeper/harvest.ts†L8-L112】【F:ops/README.md†L6-L27】
 
+### Maintainer Response (2025-10-24)
+- Strategy migrations: maintainers agree idle balances must redeploy automatically after `updateTarget`. They plan to pair the redeploy with a vault-triggered hook where practical and extend test coverage around the migration flow.
+- Keeper role: maintainers concur that running automation with multisig credentials is unacceptable. A dedicated harvester role (or equivalent redesign) is prioritized so routine harvests can execute without owner keys.
+- UI asset decimals: front-end cards will source decimals from discovery/config so six-decimal assumptions no longer distort metrics.
+- Chainlink validation: feed freshness and sign checks will guard the USD display before values render in the UI.
+- Documentation drift: README references, environment templates, and the incident-response runbook will stay synchronized so new contributors land in a working state.
+
 ### Low Severity
 
 3. **Vault metrics assume six-decimal assets**
@@ -56,16 +63,16 @@
 - Front-end deposit/withdraw forms do not reflect the paused state proactively; users only see a revert. Consider disabling actions when `paused` is true (the admin page already fetches this state).【F:contracts/src/TrellisVault.sol†L110-L159】【F:frontend/app/vault/[address]/page.tsx†L88-L178】
 
 ## Recommendations & Next Steps
-1. Patch `StrategyERC4626.updateTarget` to redeploy idle balances and extend tests to cover migrations.
-2. Introduce a role-based harvester and update keeper automation/docs to avoid owner key exposure.
-3. Fix configuration/documentation drift (missing `.env` templates, stale runbook links) so that fresh clones can install successfully.
-4. Propagate accurate token decimals and feed validation into the UI, and consider surfacing paused status directly in deposit/withdraw components.
-5. Expand Foundry test coverage for failure cases (strategy shortfalls, fee adjustments, paused interactions) and add front-end integration tests or type-safe mocks as the UI stabilizes.
+1. Monitor the new `updateTarget` redeploy logic and migration tests added in v1.2; extend coverage for partial-withdraw/loss scenarios next.
+2. Roll out the dedicated harvester role operationally (set addresses, rotate keys) and continue fuzzing unauthorized harvest attempts.
+3. Keep configuration/documentation templates in sync with repo structure and automate drift detection in CI.
+4. Continue improving UI resiliency: disable deposit/withdraw when paused and audit any additional Chainlink feeds before enabling them.
+5. Expand Foundry failure-mode coverage (strategy shortfalls, fee adjustments) and introduce front-end integration tests or mocks as flows stabilize.
 
 ---
-Prepared by: Codex Builder (gpt-5-codex) on 2025-10-23. Updated 2025-10-24 with remediation status.
+Prepared by: Codex Builder (gpt-5-codex) on 2025-10-23. Updated 2025-10-24 with maintainer response and remediation status.
 
 ## Document Control
-- **Version:** 1.1 (medium/low findings remediated)
+- **Version:** 1.2 (maintainer response captured; medium/low findings remediated)
 - **Status:** Released to repository (ready for GitHub push)
-- **Next Review:** When new contracts/strategies are introduced or additional findings emerge
+- **Next Review:** When new contracts/strategies are introduced, maintainer fixes land, or additional findings emerge
