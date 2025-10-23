@@ -12,7 +12,11 @@
     "test": "pnpm --filter @trellis/contracts test",
     "contracts:build": "pnpm --filter @trellis/contracts build",
     "contracts:test": "pnpm --filter @trellis/contracts test",
-    "frontend:dev": "pnpm --filter @trellis/frontend dev"
+    "frontend:dev": "pnpm --filter @trellis/frontend dev",
+    "generate:abis": "node scripts/generate-frontend-abis.mjs"
+  },
+  "devDependencies": {
+    "prettier": "^3.5.3"
   },
   "pnpm": {
     "overrides": {

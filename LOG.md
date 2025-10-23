@@ -1,3 +1,11 @@
+## 2025-10-23T12:37:47Z [Code|Frontend|Docs|Ops]
+- Summary: Generated typed ABIs for Trellis contracts, parameterized the deployment script + env templates, and bootstrapped frontend vault config/metrics wiring against Base/Base Sepolia networks.
+- Versions: Node=24.6.0, Next=16.0.0, wagmi=2.18.2, rainbowkit=2.2.9, viem=2.38.3, Foundry=1.4.3, OZ=5.4.0
+- Changes: scripts/generate-frontend-abis.mjs, frontend/contracts/abi/*, package.json, contracts/script/Deploy.s.sol, contracts/script/DeployHelpers.s.sol, contracts/.env.example, frontend/.env.local.example, frontend/scaffold.config.ts, frontend/config/vaults.ts, frontend/hooks/useVaultMetrics.ts, frontend/components/vaults/VaultOverviewCard.tsx, frontend/app/page.tsx, README.md
+- Decisions: Added pnpm ABI override (WalletConnect 2.22.x) to resolve React 19 peers and surfaced ABIs via a dedicated generator; deployment script now enforces env config and retains operational control until multisig accepts ownership; frontend home view shows Base/Base Sepolia vault metrics driven from the new hooks.
+- Next: 1) Ingest deployment artifacts to auto-populate `deployedContracts.ts` once Base Sepolia deployment exists. 2) Build `/vault/[address]` detail page with deposit/withdraw flows. 3) Flesh out admin panel wiring (pause, harvest, setStrategy) gated by owner address.
+- Reviewer: TBD
+
 ## 2025-10-23T12:06:29Z [Code|Test|Docs|Ops]
 - Summary: Implemented the TrellisVault ERC-4626 core with high-water-mark fee minting, wired the StrategyERC4626 adapter, authored comprehensive Foundry tests, added keeper/runbook scaffolding, and resolved WalletConnect React 19 compatibility via pnpm overrides.
 - Versions: Node=24.6.0, Next=16.0.0, wagmi=2.18.2, rainbowkit=2.2.9, viem=2.38.3, Foundry=1.4.3, OZ=5.4.0

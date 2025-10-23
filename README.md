@@ -35,6 +35,7 @@
 pnpm install                      # workspace dependencies
 pnpm contracts:build              # forge build (TrellisVault + Strategy)
 pnpm contracts:test               # run Foundry unit tests
+pnpm generate:abis                # sync ABI exports for the frontend
 pnpm frontend:dev                 # launch Next.js dev server (localhost:3000)
 ```
 
@@ -49,6 +50,7 @@ Environment templates:
 * `src/TrellisVault.sol` — ERC-4626 vault with high-water-mark fee sharing (default 10%), pausable entry points, guarded sweep, and strategy routing.
 * `src/strategies/StrategyERC4626.sol` — pluggable adapter that wraps an upstream ERC-4626 vault (Euler v2 Earn in MVP) with allowance hygiene + target migration controls.
 * `test/TrellisVault.t.sol` — Foundry tests covering deposit/withdraw flows, fee accrual, pause/sweep enforcement, and strategy migration.
+* `script/Deploy.s.sol` — parameterised deployment (reads `ASSET_TOKEN_ADDRESS`, `STRATEGY_TARGET_ERC4626`, `VAULT_*` env vars; leaves vault ownership with deployer until `acceptOwnership()`).
 * Static analysis (`slither`) executes via CI; `forge fmt` keeps Solidity style aligned.
 
 Common commands:
@@ -66,6 +68,7 @@ forge fmt
 * Pages: `/` (vault list), `/vault/[address]` (details, deposit/withdraw), `/admin` (owner actions guarded by wallet address).
 * wagmi + RainbowKit preconfigured for Base / Base Sepolia chains.
 * Uses React Query for data fetching and `viem` for onchain reads (`totalAssets`, `convertTo*`, fees, high-water mark metrics).
+* Contract ABIs live under `frontend/contracts/abi/` and are generated from Foundry artifacts via `pnpm generate:abis`.
 
 Local development:
 
