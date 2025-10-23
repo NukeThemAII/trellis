@@ -13,6 +13,7 @@ export type VaultConfig = {
   name: string;
   symbol: string;
   assetSymbol: string;
+  assetDecimals: number;
   performanceFeeBps: number;
   networks: VaultNetworkConfig[];
 };
@@ -31,6 +32,7 @@ export const VAULTS: VaultConfig[] = [
     name: "USDT Euler Earn Vault",
     symbol: "tvUSDT",
     assetSymbol: "USDT",
+    assetDecimals: 6,
     performanceFeeBps: 1_000,
     networks: [
       {

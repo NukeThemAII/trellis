@@ -258,14 +258,15 @@ const VaultPage = () => {
   const { vault, network } = matchingVault;
   const expectedChainId = network.chainId;
 
-  const { metrics, isLoading: metricsLoading, refetch: refetchMetrics } = useVaultMetrics({
+  const { assetAddress, assetDecimals, assetSymbol } = useVaultInfo({
     address: network.address,
     chainId: expectedChainId,
   });
 
-  const { assetAddress, assetDecimals, assetSymbol } = useVaultInfo({
+  const { metrics, isLoading: metricsLoading, refetch: refetchMetrics } = useVaultMetrics({
     address: network.address,
     chainId: expectedChainId,
+    decimals: assetDecimals,
   });
 
   const { userShares, walletBalance, allowance, formattedBalance, refetch: refetchUser } = useVaultUserState({
@@ -277,7 +278,9 @@ const VaultPage = () => {
 
   const strategyAddress = useStrategyAddress(expectedChainId);
   const usdFeed = parseEnvAddress(process.env.NEXT_PUBLIC_CHAINLINK_USD_FEED);
-  const usdPrice = useUsdPrice({ feed: usdFeed, chainId: expectedChainId });
+  const staleSecondsEnv = Number(process.env.NEXT_PUBLIC_CHAINLINK_STALE_AFTER ?? "");
+  const staleSeconds = Number.isFinite(staleSecondsEnv) && staleSecondsEnv > 0 ? staleSecondsEnv : undefined;
+  const usdPrice = useUsdPrice({ feed: usdFeed, chainId: expectedChainId, staleAfterSeconds: staleSeconds });
 
   const totalAssetsFormatted = metrics ? formatUnits(metrics.totalAssets, assetDecimals) : "0";
   const totalSupplyFormatted = metrics ? formatUnits(metrics.totalSupply, assetDecimals) : "0";

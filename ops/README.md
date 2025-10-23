@@ -4,7 +4,7 @@ This directory houses operational tooling for Trellis Vaults.
 
 ## Keeper — Harvest Automation
 
-The script at `keeper/harvest.ts` evaluates whether the vault has accrued profit above the high-water mark and, if the configured profit threshold is exceeded, submits a `harvest()` transaction.
+The script at `keeper/harvest.ts` evaluates whether the vault has accrued profit above the high-water mark and, if the configured profit threshold is exceeded, submits a `harvest()` transaction. Ensure the keeper key is authorized via `setHarvester(<keeper address>)` (or use the owner account directly) before running the script.
 
 ### Usage
 
@@ -28,5 +28,5 @@ The script relies on the ABI fragment inline; regenerate from Foundry artifacts 
 
 ## Runbooks
 
-- `docs/runbooks/incident.md` (coming soon) will outline pause/escalation procedures.
+- `docs/runbooks/incident-response.md` outlines pause/escalation procedures.
 - Add new runbooks here and reference them from `README.md` when processes stabilize.

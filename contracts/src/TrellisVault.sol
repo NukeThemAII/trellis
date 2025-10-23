@@ -27,6 +27,7 @@ contract TrellisVault is ERC4626, Pausable, Ownable2Step, ReentrancyGuard {
     event StrategyUpdated(address indexed previousStrategy, address indexed newStrategy, uint256 reclaimedAssets);
     event StrategyWithdrawAll(uint256 assetsRecovered);
     event Sweep(address indexed token, uint256 amount, address indexed recipient);
+    event HarvesterUpdated(address indexed previousHarvester, address indexed newHarvester);
 
     /*//////////////////////////////////////////////////////////////
                                 ERRORS
@@ -37,6 +38,7 @@ contract TrellisVault is ERC4626, Pausable, Ownable2Step, ReentrancyGuard {
     error InvalidStrategy();
     error SweepAssetNotAllowed();
     error StrategyNotSet();
+    error UnauthorizedHarvester();
 
     /*//////////////////////////////////////////////////////////////
                                 CONSTANTS
@@ -55,6 +57,7 @@ contract TrellisVault is ERC4626, Pausable, Ownable2Step, ReentrancyGuard {
     address public feeRecipient;
     uint16 public performanceFeeBps;
     uint256 public highWaterMark; // price per share scaled by HWM_SCALE
+    address public harvester;
 
     /*//////////////////////////////////////////////////////////////
                                 CONSTRUCTOR
@@ -71,6 +74,7 @@ contract TrellisVault is ERC4626, Pausable, Ownable2Step, ReentrancyGuard {
         _updateFeeRecipient(_feeRecipient);
         _updatePerformanceFee(_performanceFeeBps == 0 ? DEFAULT_FEE_BPS : _performanceFeeBps);
         highWaterMark = HWM_SCALE;
+        harvester = _owner;
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -189,7 +193,8 @@ contract TrellisVault is ERC4626, Pausable, Ownable2Step, ReentrancyGuard {
         _updateHighWaterMark();
     }
 
-    function harvest() external onlyOwner whenNotPaused nonReentrant {
+    function harvest() external whenNotPaused nonReentrant {
+        if (msg.sender != owner() && msg.sender != harvester) revert UnauthorizedHarvester();
         if (address(strategy) == address(0)) revert StrategyNotSet();
         _harvest();
     }
@@ -212,6 +217,12 @@ contract TrellisVault is ERC4626, Pausable, Ownable2Step, ReentrancyGuard {
 
     function setFeeRecipient(address newRecipient) external onlyOwner {
         _updateFeeRecipient(newRecipient);
+    }
+
+    function setHarvester(address newHarvester) external onlyOwner {
+        address previous = harvester;
+        harvester = newHarvester;
+        emit HarvesterUpdated(previous, newHarvester);
     }
 
     function sweep(address token, address recipient, uint256 amount) external onlyOwner {

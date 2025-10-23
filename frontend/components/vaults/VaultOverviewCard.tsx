@@ -6,10 +6,10 @@ import { useVaultMetrics } from "~~/hooks/useVaultMetrics";
 type VaultOverviewCardProps = {
   vault: VaultConfig;
   network: VaultNetworkConfig;
-  decimals?: number;
+  decimals: number;
 };
 
-export const VaultOverviewCard = ({ vault, network, decimals = 6 }: VaultOverviewCardProps) => {
+export const VaultOverviewCard = ({ vault, network, decimals }: VaultOverviewCardProps) => {
   const { metrics, isLoading } = useVaultMetrics({
     address: network.address,
     chainId: network.chainId,

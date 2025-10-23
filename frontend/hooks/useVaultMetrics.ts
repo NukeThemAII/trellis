@@ -14,7 +14,7 @@ type VaultMetricResult = {
 };
 
 export const useVaultMetrics = (params: { address?: HexAddress; chainId?: number; decimals?: number }) => {
-  const { address, chainId, decimals = 6 } = params;
+  const { address, chainId, decimals = 18 } = params;
 
   const enabled = Boolean(address);
 

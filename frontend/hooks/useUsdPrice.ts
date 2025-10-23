@@ -26,8 +26,10 @@ const aggregatorAbi = [
 
 type HexAddress = `0x${string}`;
 
-export const useUsdPrice = (params: { feed?: HexAddress; chainId?: number }) => {
-  const { feed, chainId } = params;
+const DEFAULT_STALE_AFTER_SECONDS = 60 * 60; // 1 hour
+
+export const useUsdPrice = (params: { feed?: HexAddress; chainId?: number; staleAfterSeconds?: number }) => {
+  const { feed, chainId, staleAfterSeconds = DEFAULT_STALE_AFTER_SECONDS } = params;
   const enabled = Boolean(feed);
 
   const contracts = enabled
@@ -45,7 +47,7 @@ export const useUsdPrice = (params: { feed?: HexAddress; chainId?: number }) => 
           chainId,
         },
       ] as const)
-    : ([] as const);
+    : undefined;
 
   const { data } = useReadContracts({
     allowFailure: true,
@@ -56,10 +58,26 @@ export const useUsdPrice = (params: { feed?: HexAddress; chainId?: number }) => 
   });
 
   return useMemo(() => {
-    if (!data || !data[0] || !data[1]) return undefined;
-    const latest = data[0] as [bigint, bigint, bigint, bigint, bigint];
-    const decimals = data[1] as number;
-    const answer = Number(latest[1]) / 10 ** decimals;
-    return answer;
-  }, [data]);
+    if (!data || data.length < 2) return undefined;
+
+    const latestRound = data[0];
+    const decimalsResult = data[1];
+
+    if (latestRound.status !== "success" || decimalsResult.status !== "success") {
+      return undefined;
+    }
+
+    const latest = latestRound.result as [bigint, bigint, bigint, bigint, bigint];
+    const decimals = Number(decimalsResult.result);
+
+    const [roundId, answer, startedAt, updatedAt, answeredInRound] = latest;
+    if (answer <= 0n) return undefined;
+    if (updatedAt == 0n || answeredInRound < roundId) return undefined;
+    if (startedAt == 0n) return undefined;
+
+    const nowSeconds = Math.floor(Date.now() / 1000);
+    if (Number(updatedAt) + staleAfterSeconds < nowSeconds) return undefined;
+
+    return Number(answer) / 10 ** decimals;
+  }, [data, staleAfterSeconds]);
 };

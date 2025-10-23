@@ -41,9 +41,9 @@ pnpm frontend:dev                 # launch Next.js dev server (localhost:3000)
 
 Environment templates:
 
-- `contracts/.env.example` — RPC URLs, deployer key, owner, fee recipient, asset + target addresses.
-- `frontend/.env.local.example` — public RPC env, walletconnect project id, default vault/strategy addresses, optional Chainlink price feed.
-- `ops/.env.example` — keeper configuration for harvest automation.
+- `contracts/.env.example` — RPC URL, deployer key, vault metadata, role addresses, and performance fee configuration for Foundry scripts.
+- `frontend/.env.local.example` — default vault/strategy addresses, WalletConnect project id, Chainlink feed configuration, and feed staleness threshold.
+- `ops/.env.example` — keeper configuration (network, RPC, vault address, keeper key, fee threshold).
 
 ## Contracts Module (Foundry)
 
@@ -79,8 +79,9 @@ pnpm dev
 
 ## Ops & Documentation
 
-* `ops/keeper/harvest.ts` — viem-based keeper script that checks high-water earnings and triggers `harvest()` when the configured fee threshold is met.
-* `docs/runbooks/incident-response.md` (initial draft) outlines pause + withdraw-all steps for production incidents.
+* `ops/keeper/harvest.ts` — viem-based keeper script that checks high-water earnings and triggers `harvest()` when the configured fee threshold is met. The script now enforces that the configured signer matches either the vault owner or the dedicated harvester role set via `setHarvester()`.
+* `docs/runbooks/incident-response.md` outlines pause + withdraw-all steps for production incidents.
+* `docs/runbooks/github-push.md` explains how to stage, commit, and push Trellis changes to the GitHub repository.
 * `docs/addresses.base*.json` hold deployment metadata (addresses, blocks, verification URLs).
 * Every material change updates **README.md** and appends **LOG.md** with a version audit.
 
@@ -90,7 +91,7 @@ pnpm dev
 * `pause()` halts user flows; owner can `withdrawAll` from strategy.
 * `sweep()` cannot move the underlying asset.
 * Performance fees apply only to realized profit (high-water mark).
-* Owner (Ops multisig) separate from `feeRecipient` wallet.
+* Owner (Ops multisig) separate from `feeRecipient` wallet; `setHarvester()` allows delegating harvest execution to a scoped keeper key.
 
 ## Roadmap Highlights
 

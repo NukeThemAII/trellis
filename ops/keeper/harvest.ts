@@ -45,6 +45,20 @@ const vaultAbi = [
     "outputs": [{ "internalType": "uint16", "name": "", "type": "uint16" }],
     "stateMutability": "view",
     "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "harvester",
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "owner",
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
   }
 ] as const;
 
@@ -72,13 +86,31 @@ async function main() {
   const publicClient = createPublicClient({ chain, transport: http(rpcUrl) });
   const walletClient = createWalletClient({ chain, transport: http(rpcUrl), account });
 
-  const [totalAssets, totalSupply, decimals, highWaterMark, performanceFeeBps] = await Promise.all([
+  const [
+    totalAssets,
+    totalSupply,
+    decimals,
+    highWaterMark,
+    performanceFeeBps,
+    harvester,
+    owner,
+  ] = await Promise.all([
     publicClient.readContract({ address: vaultAddress, abi: vaultAbi, functionName: 'totalAssets' }),
     publicClient.readContract({ address: vaultAddress, abi: vaultAbi, functionName: 'totalSupply' }),
     publicClient.readContract({ address: vaultAddress, abi: vaultAbi, functionName: 'decimals' }),
     publicClient.readContract({ address: vaultAddress, abi: vaultAbi, functionName: 'highWaterMark' }),
-    publicClient.readContract({ address: vaultAddress, abi: vaultAbi, functionName: 'performanceFeeBps' })
+    publicClient.readContract({ address: vaultAddress, abi: vaultAbi, functionName: 'performanceFeeBps' }),
+    publicClient.readContract({ address: vaultAddress, abi: vaultAbi, functionName: 'harvester' }),
+    publicClient.readContract({ address: vaultAddress, abi: vaultAbi, functionName: 'owner' })
   ]);
+
+  if (
+    harvester.toLowerCase() !== account.address.toLowerCase() &&
+    owner.toLowerCase() !== account.address.toLowerCase()
+  ) {
+    console.error('keeper account is not authorized; call setHarvester() or harvest from the owner account');
+    return;
+  }
 
   if (totalSupply === 0n) {
     console.log('nothing to harvest (supply = 0)');

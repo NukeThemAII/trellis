@@ -21,6 +21,11 @@ pnpm-debug.log*
 .env.development.local
 .env.production.local
 .env.test.local
+!.env.example
+!.env.*.example
+!contracts/.env.example
+!frontend/.env.local.example
+!ops/.env.example
 
 # Editor
 .vscode/

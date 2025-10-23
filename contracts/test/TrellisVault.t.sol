@@ -52,6 +52,7 @@ contract TrellisVaultTest is Test {
     address internal constant FEE_RECIPIENT = address(0xFEE);
     address internal constant USER = address(0xBEEF);
     address internal constant KEEP = address(0xCAFE);
+    address internal constant HARVESTER = address(0xC0FFEE);
 
     uint256 internal constant ONE = 1e6; // 6 decimal asset
 
@@ -171,6 +172,30 @@ contract TrellisVaultTest is Test {
         assertEq(vault.balanceOf(FEE_RECIPIENT), feeBalanceBefore);
     }
 
+    function testHarvesterRoleCanHarvest() public {
+        uint256 amount = 100 * ONE;
+        _deposit(USER, amount);
+
+        assetToken.mint(address(target), 10 * ONE);
+
+        vm.prank(OWNER);
+        vault.setHarvester(HARVESTER);
+        assertEq(vault.harvester(), HARVESTER);
+
+        vm.prank(HARVESTER);
+        vault.harvest();
+
+        assertGt(vault.balanceOf(FEE_RECIPIENT), 0);
+    }
+
+    function testHarvestRevertsForUnauthorizedCaller() public {
+        _deposit(USER, 10 * ONE);
+
+        vm.prank(USER);
+        vm.expectRevert(TrellisVault.UnauthorizedHarvester.selector);
+        vault.harvest();
+    }
+
     function testPauseBlocksDeposits() public {
         vm.prank(OWNER);
         vault.pause();
@@ -209,5 +234,18 @@ contract TrellisVaultTest is Test {
         assertEq(address(vault.strategy()), address(newStrategy));
         assertEq(target.balanceOf(address(strategy)), 0);
         assertGt(newTarget.balanceOf(address(newStrategy)), 0);
+    }
+
+    function testUpdateTargetRedeploysIdleAssets() public {
+        _deposit(USER, 50 * ONE);
+
+        MockERC4626Target newTarget = new MockERC4626Target(assetToken);
+
+        vm.prank(OWNER);
+        strategy.updateTarget(newTarget);
+
+        assertEq(assetToken.balanceOf(address(strategy)), 0);
+        assertEq(target.balanceOf(address(strategy)), 0);
+        assertGt(newTarget.balanceOf(address(strategy)), 0);
     }
 }

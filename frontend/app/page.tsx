@@ -36,7 +36,12 @@ const Home: NextPage = () => {
             </div>
           ) : (
             activeVaults.map(({ vault, network }) => (
-              <VaultOverviewCard key={`${vault.id}-${network.chainId}`} vault={vault} network={network} />
+              <VaultOverviewCard
+                key={`${vault.id}-${network.chainId}`}
+                vault={vault}
+                network={network}
+                decimals={vault.assetDecimals}
+              />
             ))
           )}
         </div>

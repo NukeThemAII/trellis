@@ -156,6 +156,17 @@ contract StrategyERC4626 is Ownable, IStrategy {
 
         _targetVault = newTarget;
 
+        uint256 idle = assetToken.balanceOf(address(this));
+        if (idle > 0) {
+            address newTargetAddr = address(newTarget);
+            assetToken.forceApprove(newTargetAddr, 0);
+            assetToken.forceApprove(newTargetAddr, idle);
+            uint256 redeployedShares = newTarget.deposit(idle, address(this));
+            assetToken.forceApprove(newTargetAddr, 0);
+
+            emit StrategyDeposit(idle, redeployedShares);
+        }
+
         emit StrategyTargetUpdated(previous, address(newTarget));
     }
 }

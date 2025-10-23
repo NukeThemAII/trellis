@@ -1,3 +1,27 @@
+## 2025-10-24T09:00:00Z [Code|Test|Frontend|Docs|Ops]
+- Summary: Closed medium/low audit items by redeploying assets during strategy migrations, introducing a dedicated harvester role + keeper guardrails, threading asset decimals into UI metrics, validating Chainlink feed freshness, and restoring the documented env templates/docs.
+- Versions: Node=24.6.0, Next=16.0.0, wagmi=2.18.2, rainbowkit=2.2.9, viem=2.38.3, Foundry=1.4.3, OZ=5.4.0
+- Changes: contracts/src/TrellisVault.sol, contracts/src/strategies/StrategyERC4626.sol, contracts/test/TrellisVault.t.sol, frontend/app/page.tsx, frontend/app/vault/[address]/page.tsx, frontend/components/vaults/VaultOverviewCard.tsx, frontend/hooks/useVaultMetrics.ts, frontend/hooks/useUsdPrice.ts, frontend/config/vaults.ts, ops/keeper/harvest.ts, ops/README.md, contracts/.env.example, frontend/.env.local.example, ops/.env.example, README.md, AUDIT.md, LOG.md
+- Decisions: Added an allowlisted harvester to keep access minimal while preserving owner authority; treated Chainlink answers older than one hour (configurable) as stale; shipped documented env templates to eliminate setup drift.
+- Next: Expand strategy failure-mode tests (partial withdraw, non-zero loss) and surface paused state in the UI to proactively disable deposit/withdraw buttons.
+- Reviewer: TBD
+
+## 2025-10-23T15:42:00Z [Docs]
+- Summary: Authored a GitHub publishing runbook for Trellis contributors and linked it from the README to guide pushing audit updates upstream.
+- Versions: Node=24.6.0, Next=16.0.0, wagmi=2.18.2, rainbowkit=2.2.9, viem=2.38.3, Foundry=1.4.3, OZ=5.4.0
+- Changes: docs/runbooks/github-push.md, README.md, LOG.md
+- Decisions: Documented the preferred workflow using conventional commits and rebasing on origin/main before pushing to ensure clean history.
+- Next: Review GitHub permissions and automate PR checklist once CI workflows are active.
+- Reviewer: TBD
+
+## 2025-10-23T15:05:00Z [Docs]
+- Summary: Added document control metadata to AUDIT.md to clarify publication status and review cadence after prepping the audit for GitHub push.
+- Versions: Node=24.6.0, Next=16.0.0, wagmi=2.18.2, rainbowkit=2.2.9, viem=2.38.3, Foundry=1.4.3, OZ=5.4.0
+- Changes: AUDIT.md, LOG.md
+- Decisions: Confirmed audit remains accurate; documented release state to satisfy publication request.
+- Next: Monitor remediation progress and update audit once medium-severity findings are addressed.
+- Reviewer: TBD
+
 ## 2025-10-23T12:59:15Z [Code|Frontend|Ops]
 - Summary: Generated frontend contract artifacts from deployments, delivered vault detail flows (deposit/withdraw with allowances + pricing), and built the admin control surface for pause/harvest/strategy management.
 - Versions: Node=24.6.0, Next=16.0.0, wagmi=2.18.2, rainbowkit=2.2.9, viem=2.38.3, Foundry=1.4.3, OZ=5.4.0
